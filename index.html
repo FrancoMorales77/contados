@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contados — Calculadora Financiera</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3350;
+    --accent: #4f8ef7;
+    --accent2: #7c5cfc;
+    --green: #2dd4a4;
+    --amber: #f5a623;
+    --red: #e85d5d;
+    --text: #e8eaf2;
+    --muted: #7a80a0;
+    --radius: 14px;
+    --font: 'Segoe UI', system-ui, sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px 60px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 36px;
+  }
+
+  .logo-tag {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  h1 {
+    font-size: 38px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #4f8ef7, #7c5cfc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.1;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 15px;
+    margin-top: 8px;
+  }
+
+  /* --- SCREENS --- */
+  .screen { display: none; width: 100%; max-width: 520px; }
+  .screen.active { display: block; }
+
+  /* --- WELCOME --- */
+  #screen-welcome .greeting-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    margin-bottom: 20px;
+  }
+
+  #screen-welcome .greeting-box label {
+    display: block;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+
+  #screen-welcome .greeting-box input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 16px;
+    padding: 12px 14px;
+    outline: none;
+    transition: border-color .2s;
+  }
+
+  #screen-welcome .greeting-box input:focus {
+    border-color: var(--accent);
+  }
+
+  .btn-primary {
+    width: 100%;
+    background: linear-gradient(135deg, #4f8ef7, #7c5cfc);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    padding: 14px;
+    cursor: pointer;
+    transition: opacity .2s, transform .1s;
+    letter-spacing: .3px;
+  }
+  .btn-primary:hover { opacity: .9; transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+
+  /* --- MENU --- */
+  #screen-menu .saludo {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  #screen-menu .instruccion {
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+
+  .menu-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .menu-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    transition: border-color .2s, background .2s, transform .15s;
+  }
+  .menu-card:hover {
+    border-color: var(--accent);
+    background: var(--surface2);
+    transform: translateX(4px);
+  }
+
+  .card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+
+  .icon-afp  { background: rgba(79,142,247,.15); }
+  .icon-bono { background: rgba(45,212,164,.15); }
+  .icon-cae  { background: rgba(124,92,252,.15); }
+
+  .card-text h3 { font-size: 16px; font-weight: 600; margin-bottom: 3px; }
+  .card-text p  { font-size: 13px; color: var(--muted); }
+
+  .card-arrow {
+    margin-left: auto;
+    color: var(--muted);
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  /* --- CALCULADORAS --- */
+  .calc-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .btn-back {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    font-size: 16px;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color .2s, border-color .2s;
+    flex-shrink: 0;
+  }
+  .btn-back:hover { color: var(--text); border-color: var(--accent); }
+
+  .calc-title { font-size: 20px; font-weight: 700; }
+  .calc-badge {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    text-transform: uppercase;
+  }
+  .badge-afp  { background: rgba(79,142,247,.15);  color: var(--accent); }
+  .badge-bono { background: rgba(45,212,164,.15);  color: var(--green); }
+  .badge-cae  { background: rgba(124,92,252,.15); color: var(--accent2); }
+
+  .form-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px;
+    margin-bottom: 14px;
+  }
+
+  .section-label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  .field { margin-bottom: 16px; }
+  .field:last-child { margin-bottom: 0; }
+
+  .field label {
+    display: block;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 7px;
+    font-weight: 500;
+  }
+
+  .field input, .field select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 15px;
+    padding: 11px 14px;
+    outline: none;
+    transition: border-color .2s;
+    appearance: none;
+  }
+  .field input:focus, .field select:focus { border-color: var(--accent); }
+
+  .field input[type=number]::-webkit-inner-spin-button { display: none; }
+
+  .field .hint {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 5px;
+  }
+
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* --- RESULTADO --- */
+  .result-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-top: 14px;
+    display: none;
+  }
+  .result-box.visible { display: block; }
+
+  .result-title {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 18px;
+  }
+
+  .result-main {
+    text-align: center;
+    padding: 20px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 18px;
+  }
+
+  .result-label { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+
+  .result-value {
+    font-size: 36px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #4f8ef7, #7c5cfc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .result-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+  .result-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .breakdown-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+  }
+
+  .breakdown-row .bk-label { color: var(--muted); }
+  .breakdown-row .bk-val   { font-weight: 600; color: var(--text); }
+  .breakdown-row .bk-val.green  { color: var(--green); }
+  .breakdown-row .bk-val.amber  { color: var(--amber); }
+  .breakdown-row .bk-val.red    { color: var(--red); }
+
+  .error-msg {
+    background: rgba(232,93,93,.1);
+    border: 1px solid rgba(232,93,93,.3);
+    border-radius: 8px;
+    color: var(--red);
+    font-size: 13px;
+    padding: 10px 14px;
+    margin-top: 12px;
+    display: none;
+  }
+  .error-msg.visible { display: block; }
+
+  /* Divider */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 14px 0;
+  }
+
+  /* Info tip */
+  .info-tip {
+    background: rgba(79,142,247,.08);
+    border: 1px solid rgba(79,142,247,.2);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 13px;
+    color: #7aaaf5;
+    margin-top: 14px;
+    line-height: 1.5;
+  }
+
+  /* Progress bar CAE */
+  .progress-wrap { margin-top: 14px; }
+  .progress-header { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .progress-bar { background: var(--surface2); border-radius: 6px; height: 10px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg, #7c5cfc, #4f8ef7); transition: width .6s ease; }
+
+  footer {
+    margin-top: 48px;
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-tag">Sistema Financiero</div>
+  <h1>Contados</h1>
+  <p class="subtitle">Calcula tu AFP, bonos y deuda CAE en segundos</p>
+</header>
+
+<!-- PANTALLA: BIENVENIDA -->
+<div id="screen-welcome" class="screen active">
+  <div class="greeting-box">
+    <label for="input-nombre">¿Cómo te llamas?</label>
+    <input type="text" id="input-nombre" placeholder="Tu nombre aquí..." autocomplete="off" />
+  </div>
+  <button class="btn-primary" onclick="irAlMenu()">Continuar →</button>
+</div>
+
+<!-- PANTALLA: MENÚ -->
+<div id="screen-menu" class="screen">
+  <p class="saludo" id="saludo-texto">Hola, —</p>
+  <p class="instruccion">¿Qué necesitas calcular hoy?</p>
+
+  <div class="menu-cards">
+    <div class="menu-card" onclick="irA('afp')">
+      <div class="card-icon icon-afp">🏦</div>
+      <div class="card-text">
+        <h3>Calcular AFP</h3>
+        <p>Estima tu pensión según sueldo y años de cotización</p>
+      </div>
+      <div class="card-arrow">›</div>
+    </div>
+
+    <div class="menu-card" onclick="irA('bonos')">
+      <div class="card-icon icon-bono">💰</div>
+      <div class="card-text">
+        <h3>Calcular Bonos</h3>
+        <p>Suma tus bonos recurrentes y calcula su valor anual</p>
+      </div>
+      <div class="card-arrow">›</div>
+    </div>
+
+    <div class="menu-card" onclick="irA('cae')">
+      <div class="card-icon icon-cae">🎓</div>
+      <div class="card-text">
+        <h3>Calcular CAE</h3>
+        <p>Organiza tu deuda y calcula cuánto puedes pagar al mes</p>
+      </div>
+      <div class="card-arrow">›</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CALCULADORA AFP ===== -->
+<div id="screen-afp" class="screen">
+  <div class="calc-header">
+    <button class="btn-back" onclick="irA('menu')">‹</button>
+    <span class="calc-title">Calculadora AFP</span>
+    <span class="calc-badge badge-afp">AFP</span>
+  </div>
+
+  <div class="form-section">
+    <div class="section-label">Datos de cotización</div>
+
+    <div class="field">
+      <label>Sueldo bruto mensual (CLP)</label>
+      <input type="number" id="afp-sueldo" placeholder="Ej: 800000" min="0" />
+      <div class="hint">Tu remuneración antes de descuentos</div>
+    </div>
+
+    <div class="row2">
+      <div class="field">
+        <label>Años de cotización</label>
+        <input type="number" id="afp-anios" placeholder="Ej: 15" min="0" max="50" />
+      </div>
+      <div class="field">
+        <label>Edad actual</label>
+        <input type="number" id="afp-edad" placeholder="Ej: 35" min="18" max="70" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Sexo</label>
+      <select id="afp-sexo">
+        <option value="">Selecciona...</option>
+        <option value="M">Masculino (jubila a los 65)</option>
+        <option value="F">Femenino (jubila a los 60)</option>
+      </select>
+    </div>
+
+    <div class="row2">
+      <div class="field">
+        <label>AFP actual</label>
+        <select id="afp-afp">
+          <option value="0.1057">Capital (10.57%)</option>
+          <option value="0.1044">Cuprum (10.44%)</option>
+          <option value="0.1027">Habitat (10.27%)</option>
+          <option value="0.1027">Modelo (10.27%)</option>
+          <option value="0.1027">Planvital (10.27%)</option>
+          <option value="0.1027">Provida (10.27%)</option>
+          <option value="0.1027">Uno (10.27%)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Rentabilidad anual estimada</label>
+        <select id="afp-rent">
+          <option value="0.04">Conservadora (4%)</option>
+          <option value="0.05" selected>Moderada (5%)</option>
+          <option value="0.06">Optimista (6%)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-primary" onclick="calcularAFP()">Calcular mi pensión estimada</button>
+  <div class="error-msg" id="afp-error">Por favor completa todos los campos correctamente.</div>
+
+  <div class="result-box" id="afp-result">
+    <div class="result-title">Resultado estimado</div>
+    <div class="result-main">
+      <div class="result-label">Pensión mensual estimada al jubilar</div>
+      <div class="result-value" id="afp-pension">—</div>
+      <div class="result-sub" id="afp-pension-sub"></div>
+    </div>
+    <div class="result-breakdown">
+      <div class="breakdown-row">
+        <span class="bk-label">Fondo acumulado al jubilar</span>
+        <span class="bk-val green" id="afp-fondo">—</span>
+      </div>
+      <div class="breakdown-row">
+        <span class="bk-label">Cotización mensual (10%)</span>
+        <span class="bk-val" id="afp-cotizacion">—</span>
+      </div>
+      <div class="breakdown-row">
+        <span class="bk-label">Años hasta jubilar</span>
+        <span class="bk-val" id="afp-anos-restantes">—</span>
+      </div>
+      <div class="breakdown-row">
+        <span class="bk-label">Tasa de reemplazo estimada</span>
+        <span class="bk-val amber" id="afp-reemplazo">—</span>
+      </div>
+    </div>
+    <div class="info-tip" id="afp-tip"></div>
+  </div>
+</div>
+
+<!-- ===== CALCULADORA BONOS ===== -->
+<div id="screen-bonos" class="screen">
+  <div class="calc-header">
+    <button class="btn-back" onclick="irA('menu')">‹</button>
+    <span class="calc-title">Calculadora de Bonos</span>
+    <span class="calc-badge badge-bono">BONOS</span>
+  </div>
+
+  <div class="form-section">
+    <div class="section-label">Sueldo base</div>
+    <div class="field">
+      <label>Sueldo bruto mensual (CLP)</label>
+      <input type="number" id="bon-sueldo" placeholder="Ej: 700000" min="0" />
+    </div>
+  </div>
+
+  <div class="form-section">
+    <div class="section-label">Bono 1</div>
+    <div class="row2">
+      <div class="field">
+        <label>Monto del bono (CLP)</label>
+        <input type="number" id="bon-1-monto" placeholder="Ej: 200000" min="0" />
+      </div>
+      <div class="field">
+        <label>Frecuencia</label>
+        <select id="bon-1-freq">
+          <option value="12">Mensual</option>
+          <option value="4">Trimestral</option>
+          <option value="2">Semestral</option>
+          <option value="1">Anual</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-section">
+    <div class="section-label">Bono 2 <span style="color:var(--muted);font-size:11px">(opcional)</span></div>
+    <div class="row2">
+      <div class="field">
+        <label>Monto del bono (CLP)</label>
+        <input type="number" id="bon-2-monto" placeholder="Ej: 150000" min="0" />
+      </div>
+      <div class="field">
+        <label>Frecuencia</label>
+        <select id="bon-2-freq">
+          <option value="12">Mensual</option>
+          <option value="4">Trimestral</option>
+          <option value="2">Semestral</option>
+          <option value="1">Anual</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-section">
+    <div class="section-label">Bono 3 <span style="color:var(--muted);font-size:11px">(opcional)</span></div>
+    <div class="row2">
+      <div class="field">
+        <label>Monto del bono (CLP)</label>
+        <input type="number" id="bon-3-monto" placeholder="Ej: 100000" min="0" />
+      </div>
+      <div class="field">
+        <label>Frecuencia</label>
+        <select id="bon-3-freq">
+          <option value="12">Mensual</option>
+          <option value="4">Trimestral</option>
+          <option value="2">Semestral</option>
+          <option value="1">Anual</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-primary" onclick="calcularBonos()">Calcular ingresos con bonos</button>
+  <div class="error-msg" id="bon-error">Ingresa al menos tu sueldo y el monto del bono 1.</div>
+
+  <div class="result-box" id="bon-result">
+    <div class="result-title">Resultado</div>
+    <div class="result-main">
+      <div class="result-label">Total bonos anuales</div>
+      <div class="result-value" id="bon-anual">—</div>
+      <div class="result-sub" id="bon-sub"></div>
+    </div>
+    <div class="result-breakdown">
+      <div class="breakdown-row">
+        <span class="bk-label">Sueldo base anual</span>
+        <span class="bk-val" id="bon-sueldo-anual">—</span>
+      </div>
+      <div class="breakdown-row">
+        <span class="bk-label">Bonos totales al año</span>
+        <span class="bk-val green" id="bon-bonos-anual">—</span>
+      </div>
+      <div class="divider"></div>
+      <div class="breakdown-row">
+        <span class="bk-label">Ingreso total anual</span>
+        <span class="bk-val" id="bon-total-anual">—</span>
+      </div>
+      <div class="breakdown-row">
+        <span class="bk-label">Promedio mensual efectivo</span>
+        <span class="bk-val amber" id="bon-promedio">—</span>
+      </div>
+      <div class="breakdown-row">
+        <span class="bk-label">Los bonos representan</span>
+        <span class="bk-val" id="bon-porcentaje">—</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CALCULADORA CAE ===== -->
+<div id="screen-cae" class="screen">
+  <div class="calc-header">
+    <button class="btn-back" onclick="irA('menu')">‹</button>
+    <span class="calc-title">Calculadora CAE</span>
+    <span class="calc-badge badge-cae">CAE</span>
+  </div>
+
+  <div class="form-section">
+    <div class="section-label">Tu deuda</div>
+    <div class="field">
+      <label>Deuda total actual (CLP)</label>
+      <input type="number" id="cae-deuda" placeholder="Ej: 8000000" min="0" />
+      <div class="hint">Suma capital + intereses acumulados si los conoces</div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>Tasa de interés anual (%)</label>
+        <input type="number" id="cae-tasa" placeholder="Ej: 2" min="0" max="20" value="2" />
+        <div class="hint">El CAE real tiene tasa 2% anual</div>
+      </div>
+      <div class="field">
+        <label>Plazo máximo deseado (años)</label>
+        <input type="number" id="cae-plazo" placeholder="Ej: 10" min="1" max="30" />
+      </div>
+    </div>
+  </div>
+
+  <div class="form-section">
+    <div class="section-label">Tu situación económica</div>
+    <div class="field">
+      <label>Ingreso mensual líquido (CLP)</label>
+      <input type="number" id="cae-ingreso" placeholder="Ej: 900000" min="0" />
+      <div class="hint">Lo que recibes después de impuestos y descuentos</div>
+    </div>
+    <div class="field">
+      <label>Gastos fijos mensuales (CLP)</label>
+      <input type="number" id="cae-gastos" placeholder="Ej: 400000" min="0" />
+      <div class="hint">Arriendo, cuentas, alimentación, transporte, etc.</div>
+    </div>
+    <div class="field">
+      <label>¿Qué porcentaje máximo destinarías a la deuda?</label>
+      <select id="cae-porcentaje">
+        <option value="0.10">10% — conservador</option>
+        <option value="0.15" selected>15% — equilibrado</option>
+        <option value="0.20">20% — agresivo</option>
+        <option value="0.25">25% — máximo esfuerzo</option>
+      </select>
+    </div>
+  </div>
+
+  <button class="btn-primary" onclick="calcularCAE()">Calcular mi plan de pago</button>
+  <div class="error-msg" id="cae-error">Completa todos los campos requeridos.</div>
+
+  <div class="result-box" id="cae-result">
+    <div class="result-title">Tu plan de pago CAE</div>
+    <div class="result-main">
+      <div class="result-label">Cuota mensual recomendada</div>
+      <div class="result-value" id="cae-cuota">—</div>
+      <div class="result-sub" id="cae-cuota-sub"></div>
+    </div>
+
+    <div class="result-breakdown">
+      <div class="breakdown-row">
+        <span class="bk-label">Ingreso mensual líquido</span>
+        <span class="bk-val" id="cae-res-ingreso">—</span>
+      </div>
+      <div class="breakdown-row">
+        <span class="bk-label">Gastos fijos</span>
+        <span class="bk-val red" id="cae-res-gastos">—</span>
+      </div>
+      <div class="breakdown-row">
+        <span class="bk-label">Disponible libre</span>
+        <span class="bk-val green" id="cae-disponible">—</span>
+      </div>
+      <div class="divider"></div>
+      <div class="breakdown-row">
+        <span class="bk-label">Cuota mínima (plan elegido)</span>
+        <span class="bk-val amber" id="cae-cuota-min">—</span>
+      </div>
+      <div class="breakdown-row">
+        <span class="bk-label">Plazo estimado para pagar</span>
+        <span class="bk-val" id="cae-plazo-est">—</span>
+      </div>
+      <div class="breakdown-row">
+        <span class="bk-label">Total intereses a pagar</span>
+        <span class="bk-val red" id="cae-intereses">—</span>
+      </div>
+      <div class="breakdown-row">
+        <span class="bk-label">Dinero que te queda al mes</span>
+        <span class="bk-val green" id="cae-libre">—</span>
+      </div>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-header">
+        <span>Progreso de tu deuda con esta cuota</span>
+        <span id="cae-prog-txt">0%</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="cae-progress" style="width:0%"></div>
+      </div>
+    </div>
+
+    <div class="info-tip" id="cae-tip"></div>
+  </div>
+</div>
+
+<footer>Contados — Estimaciones referenciales, no constituyen asesoría financiera oficial</footer>
+
+<script>
+  // ---- NAVEGACIÓN ----
+  let userName = '';
+
+  function mostrar(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-' + id).classList.add('active');
+  }
+
+  function irAlMenu() {
+    const input = document.getElementById('input-nombre');
+    userName = input.value.trim() || 'Usuario';
+    document.getElementById('saludo-texto').textContent = `Hola, ${userName} 👋`;
+    mostrar('menu');
+  }
+
+  function irA(dest) {
+    if (dest === 'menu') {
+      mostrar('menu');
+    } else {
+      mostrar(dest === 'afp' ? 'afp' : dest === 'bonos' ? 'bonos' : 'cae');
+    }
+    // reset resultados
+    document.querySelectorAll('.result-box').forEach(r => r.classList.remove('visible'));
+    document.querySelectorAll('.error-msg').forEach(e => e.classList.remove('visible'));
+  }
+
+  document.getElementById('input-nombre').addEventListener('keydown', e => {
+    if (e.key === 'Enter') irAlMenu();
+  });
+
+  // ---- FORMATO ----
+  function fmt(n) {
+    return '$' + Math.round(n).toLocaleString('es-CL');
+  }
+
+  // ---- AFP ----
+  function calcularAFP() {
+    const sueldo = parseFloat(document.getElementById('afp-sueldo').value);
+    const anios  = parseFloat(document.getElementById('afp-anios').value);
+    const edad   = parseFloat(document.getElementById('afp-edad').value);
+    const sexo   = document.getElementById('afp-sexo').value;
+    const tasaAFP = parseFloat(document.getElementById('afp-afp').value);
+    const rent   = parseFloat(document.getElementById('afp-rent').value);
+
+    const errEl = document.getElementById('afp-error');
+    const resEl = document.getElementById('afp-result');
+
+    if (!sueldo || !anios || !edad || !sexo) {
+      errEl.classList.add('visible');
+      resEl.classList.remove('visible');
+      return;
+    }
+    errEl.classList.remove('visible');
+
+    const edadJubilacion = sexo === 'M' ? 65 : 60;
+    const aniosRestantes = Math.max(0, edadJubilacion - edad);
+    const totalAniosCot  = anios + aniosRestantes;
+
+    // Cotización mensual = 10% del sueldo (tasa legal fija; comisión varía)
+    const cotMensual = sueldo * 0.10;
+
+    // Fondo existente estimado (cotizaciones pasadas con rentabilidad)
+    const fondoActual = cotMensual * 12 * anios * (1 + rent * anios / 2);
+
+    // Crecimiento futuro del fondo
+    const mesesRestantes = aniosRestantes * 12;
+    let fondo = fondoActual;
+    const crecMensual = rent / 12;
+    for (let i = 0; i < mesesRestantes; i++) {
+      fondo = fondo * (1 + crecMensual) + cotMensual;
+    }
+
+    // Expectativa de vida: hombres 80, mujeres 85 (SuSeSo referencial)
+    const expVida = sexo === 'M' ? 80 : 85;
+    const mesesPension = (expVida - edadJubilacion) * 12;
+    const pension = fondo / mesesPension;
+
+    const tasaReemplazo = (pension / sueldo) * 100;
+
+    document.getElementById('afp-pension').textContent    = fmt(pension);
+    document.getElementById('afp-pension-sub').textContent = `Estimado al jubilar a los ${edadJubilacion} años`;
+    document.getElementById('afp-fondo').textContent       = fmt(fondo);
+    document.getElementById('afp-cotizacion').textContent  = fmt(cotMensual);
+    document.getElementById('afp-anos-restantes').textContent = `${aniosRestantes} años`;
+    document.getElementById('afp-reemplazo').textContent   = `${tasaReemplazo.toFixed(1)}%`;
+
+    let tip = '';
+    if (tasaReemplazo < 40) {
+      tip = '⚠️ Tu tasa de reemplazo es baja. Considera un APV (Ahorro Previsional Voluntario) para complementar tu pensión futura.';
+    } else if (tasaReemplazo < 60) {
+      tip = '💡 Tu pensión cubre más de la mitad de tu sueldo. Un APV adicional puede mejorar tu calidad de vida en la jubilación.';
+    } else {
+      tip = '✅ Tu proyección de pensión es relativamente saludable. Mantén tu cotización constante y sin lagunas previsionales.';
+    }
+    document.getElementById('afp-tip').textContent = tip;
+    resEl.classList.add('visible');
+  }
+
+  // ---- BONOS ----
+  function calcularBonos() {
+    const sueldo = parseFloat(document.getElementById('bon-sueldo').value) || 0;
+    const m1 = parseFloat(document.getElementById('bon-1-monto').value) || 0;
+    const f1 = parseFloat(document.getElementById('bon-1-freq').value);
+    const m2 = parseFloat(document.getElementById('bon-2-monto').value) || 0;
+    const f2 = parseFloat(document.getElementById('bon-2-freq').value);
+    const m3 = parseFloat(document.getElementById('bon-3-monto').value) || 0;
+    const f3 = parseFloat(document.getElementById('bon-3-freq').value);
+
+    const errEl = document.getElementById('bon-error');
+    const resEl = document.getElementById('bon-result');
+
+    if (!sueldo || !m1) {
+      errEl.classList.add('visible');
+      resEl.classList.remove('visible');
+      return;
+    }
+    errEl.classList.remove('visible');
+
+    const bonosAnual   = (m1 * f1) + (m2 * f2) + (m3 * f3);
+    const sueldoAnual  = sueldo * 12;
+    const totalAnual   = sueldoAnual + bonosAnual;
+    const promMensual  = totalAnual / 12;
+    const porcBonos    = (bonosAnual / totalAnual * 100).toFixed(1);
+
+    document.getElementById('afp-pension');
+    document.getElementById('bon-anual').textContent       = fmt(bonosAnual);
+    document.getElementById('bon-sub').textContent         = `Equivale a ${fmt(bonosAnual/12)} extra al mes en promedio`;
+    document.getElementById('bon-sueldo-anual').textContent = fmt(sueldoAnual);
+    document.getElementById('bon-bonos-anual').textContent  = fmt(bonosAnual);
+    document.getElementById('bon-total-anual').textContent  = fmt(totalAnual);
+    document.getElementById('bon-promedio').textContent     = fmt(promMensual);
+    document.getElementById('bon-porcentaje').textContent   = `${porcBonos}% de tus ingresos totales`;
+
+    resEl.classList.add('visible');
+  }
+
+  // ---- CAE ----
+  function calcularCAE() {
+    const deuda   = parseFloat(document.getElementById('cae-deuda').value);
+    const tasaA   = parseFloat(document.getElementById('cae-tasa').value) / 100;
+    const plazoMax = parseFloat(document.getElementById('cae-plazo').value);
+    const ingreso = parseFloat(document.getElementById('cae-ingreso').value);
+    const gastos  = parseFloat(document.getElementById('cae-gastos').value) || 0;
+    const porcDed = parseFloat(document.getElementById('cae-porcentaje').value);
+
+    const errEl = document.getElementById('cae-error');
+    const resEl = document.getElementById('cae-result');
+
+    if (!deuda || !ingreso || !plazoMax) {
+      errEl.classList.add('visible');
+      resEl.classList.remove('visible');
+      return;
+    }
+    errEl.classList.remove('visible');
+
+    const disponible = ingreso - gastos;
+    const cuotaMax   = ingreso * porcDed;
+    const cuotaRecomendada = Math.min(cuotaMax, disponible * 0.5);
+
+    // Cuota con amortización e intereses (fórmula cuota fija)
+    const tasaM = tasaA / 12;
+    const n = plazoMax * 12;
+    let cuotaMinima;
+    if (tasaM === 0) {
+      cuotaMinima = deuda / n;
+    } else {
+      cuotaMinima = deuda * (tasaM * Math.pow(1 + tasaM, n)) / (Math.pow(1 + tasaM, n) - 1);
+    }
+
+    // Calcular meses reales con la cuota recomendada
+    let saldo = deuda;
+    let meses = 0;
+    const cuotaUsada = Math.max(cuotaMinima, cuotaRecomendada);
+    let totalPagado = 0;
+
+    while (saldo > 0 && meses < 600) {
+      const interesMes = saldo * tasaM;
+      const amort      = cuotaUsada - interesMes;
+      if (amort <= 0) { meses = 9999; break; }
+      saldo -= amort;
+      totalPagado += cuotaUsada;
+      meses++;
+    }
+
+    const totalIntereses = totalPagado - deuda;
+    const aniosEst = Math.floor(meses / 12);
+    const mesesEst = meses % 12;
+    const libreAlMes = disponible - cuotaUsada;
+
+    // Progreso (qué % de la deuda pagarás en el primer año)
+    const pagadoPrimerAnio = Math.min(cuotaUsada * 12, deuda);
+    const pctProg = Math.min(100, (pagadoPrimerAnio / deuda) * 100);
+
+    document.getElementById('cae-cuota').textContent    = fmt(cuotaUsada);
+    document.getElementById('cae-cuota-sub').textContent = `Según tu capacidad de pago y la tasa ${(tasaA*100).toFixed(1)}% anual`;
+    document.getElementById('cae-res-ingreso').textContent = fmt(ingreso);
+    document.getElementById('cae-res-gastos').textContent  = fmt(gastos);
+    document.getElementById('cae-disponible').textContent  = fmt(disponible);
+    document.getElementById('cae-cuota-min').textContent   = fmt(cuotaUsada);
+    document.getElementById('cae-plazo-est').textContent   = meses >= 600
+      ? 'No alcanza a cubrir la deuda'
+      : `${aniosEst > 0 ? aniosEst + ' años' : ''} ${mesesEst > 0 ? mesesEst + ' meses' : ''}`.trim();
+    document.getElementById('cae-intereses').textContent  = fmt(Math.max(0, totalIntereses));
+    document.getElementById('cae-libre').textContent      = fmt(Math.max(0, libreAlMes));
+
+    setTimeout(() => {
+      document.getElementById('cae-progress').style.width = pctProg.toFixed(1) + '%';
+      document.getElementById('cae-prog-txt').textContent = pctProg.toFixed(1) + '%';
+    }, 100);
+
+    let tip = '';
+    if (libreAlMes < 100000) {
+      tip = '⚠️ La cuota consume casi todo tu disponible. Considera negociar con tu banco una extensión del plazo para bajar la cuota mensual.';
+    } else if (cuotaUsada > cuotaMinima * 1.2) {
+      tip = '✅ Estás pagando más que la cuota mínima, lo que reduce el plazo y los intereses totales. ¡Bien hecho!';
+    } else {
+      tip = '💡 Si en algún mes tienes ingresos extras, úsalos para abonar capital directamente. Reduce el saldo y pagas menos intereses.';
+    }
+    document.getElementById('cae-tip').textContent = tip;
+    resEl.classList.add('visible');
+  }
+</script>
+</body>
+</html>
